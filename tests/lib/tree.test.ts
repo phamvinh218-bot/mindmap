@@ -50,6 +50,14 @@ describe('tree operations', () => {
     expect(node(r.data, r.id).parentId).toBe(root);
   });
 
+  it('a sibling of a root child stays on that side, just below it', () => {
+    const { d, a, b } = sample(); // a is right, b is left
+    const s1 = addSibling(d, b);
+    expect(node(s1.data, s1.id)).toMatchObject({ side: 'left', x: node(d, b).x, y: node(d, b).y + V_GAP });
+    const s2 = addSibling(d, a);
+    expect(node(s2.data, s2.id).side).toBe('right');
+  });
+
   it('deleteNodes ignores the root', () => {
     const { d, root } = sample();
     expect(deleteNodes(d, [root])).toEqual(d);

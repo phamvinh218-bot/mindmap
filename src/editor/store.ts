@@ -11,6 +11,8 @@ export interface EditorState {
   dirty: boolean;
   selectedNodeIds: string[];
   selectedEdgeIds: string[];
+  /** Bumped when code (not the canvas) changes the selection, so the canvas re-applies it. */
+  selectionStamp: number;
   editingNodeId: string | null;
   collapsed: Set<string>;
   past: MapData[];
@@ -21,7 +23,12 @@ export interface EditorState {
   redo(): void;
   markSaved(version: number, savedData: MapData): void;
   select(nodeIds: string[], edgeIds?: string[]): void;
+  /** Mirror the canvas's own selection without asking it to re-apply. */
+  syncSelection(nodeIds: string[], edgeIds: string[]): void;
   setEditing(id: string | null): void;
+  /** Keys typed after a node was created but before its text box took focus. */
+  pushTypeahead(ch: string): void;
+  takeTypeahead(): string;
   toggleCollapsed(id: string): void;
   setCollapsed(ids: string[]): void;
 }
@@ -29,6 +36,7 @@ export interface EditorState {
 export type EditorStore = UseBoundStore<StoreApi<EditorState>>;
 
 export function createEditorStore(mapKey: string): EditorStore {
+  let typeahead = '';
   const persistCollapsed = (s: Set<string>) => updateViewerState(mapKey, { collapsed: [...s] });
 
   return create<EditorState>()((set, get) => ({
@@ -38,6 +46,7 @@ export function createEditorStore(mapKey: string): EditorStore {
     dirty: false,
     selectedNodeIds: [],
     selectedEdgeIds: [],
+    selectionStamp: 0,
     editingNodeId: null,
     collapsed: new Set(),
     past: [],
@@ -49,7 +58,7 @@ export function createEditorStore(mapKey: string): EditorStore {
       const collapsed = new Set(loadViewerState(mapKey).collapsed.filter((id) => ids.has(id)));
       set({
         data, version, readOnly, dirty: false, past: [], future: [],
-        selectedNodeIds: [], selectedEdgeIds: [], editingNodeId: null, collapsed,
+        selectedNodeIds: [], selectedEdgeIds: [], selectionStamp: get().selectionStamp + 1, editingNodeId: null, collapsed,
       });
     },
 
@@ -89,12 +98,32 @@ export function createEditorStore(mapKey: string): EditorStore {
     },
 
     select(nodeIds, edgeIds = []) {
-      set({ selectedNodeIds: nodeIds, selectedEdgeIds: edgeIds });
+      set({ selectedNodeIds: nodeIds, selectedEdgeIds: edgeIds, selectionStamp: get().selectionStamp + 1 });
+    },
+
+    syncSelection(nodeIds, edgeIds) {
+      const s = get();
+      const same = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+      const patch: Partial<EditorState> = {};
+      if (!same(s.selectedNodeIds, nodeIds)) patch.selectedNodeIds = nodeIds;
+      if (!same(s.selectedEdgeIds, edgeIds)) patch.selectedEdgeIds = edgeIds;
+      if (patch.selectedNodeIds || patch.selectedEdgeIds) set(patch);
     },
 
     setEditing(id) {
       if (get().readOnly && id !== null) return;
+      typeahead = '';
       set({ editingNodeId: id });
+    },
+
+    pushTypeahead(ch) {
+      if (get().editingNodeId) typeahead += ch;
+    },
+
+    takeTypeahead() {
+      const t = typeahead;
+      typeahead = '';
+      return t;
     },
 
     toggleCollapsed(id) {

@@ -61,3 +61,134 @@ body {
 .input {
   @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/25;
 }
+
+/* ---------- Mindmap canvas ---------- */
+.react-flow {
+  --xy-background-color: var(--canvas);
+  --xy-selection-background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  --xy-selection-border: 1px dashed var(--accent);
+}
+.react-flow__node-mind {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.mm-node-wrap {
+  position: relative;
+}
+.mm-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  min-width: 36px;
+  padding: 7px 12px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 2px solid var(--node-color);
+  background: color-mix(in srgb, var(--node-color) 12%, var(--surface));
+  cursor: default;
+  transition: box-shadow 120ms;
+}
+.mm-root {
+  padding: 11px 18px;
+  font-size: 17px;
+  font-weight: 600;
+  max-width: 260px;
+  color: #fff;
+  background: var(--node-color);
+}
+.mm-shape-rect { border-radius: 2px; }
+.mm-shape-rounded { border-radius: 10px; }
+.mm-shape-pill { border-radius: 999px; padding-left: 16px; padding-right: 16px; }
+.mm-shape-ellipse { border-radius: 50%; padding: 12px 22px; text-align: center; justify-content: center; }
+.mm-shape-underline {
+  border-width: 0 0 2px 0;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.mm-root.mm-shape-underline { color: var(--fg); font-size: 18px; }
+.mm-selected { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.mm-connect-target { cursor: crosshair; }
+.mm-connect-target:hover { box-shadow: 0 0 0 3px var(--accent); }
+.mm-placeholder { color: var(--muted); font-style: italic; }
+.mm-root .mm-placeholder { color: rgba(255, 255, 255, 0.75); }
+.mm-node-input {
+  field-sizing: content;
+  min-width: 80px;
+  max-width: 196px;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+.mm-link {
+  flex: none;
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.mm-root .mm-link { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.mm-link-dead { color: var(--danger); text-decoration: line-through; }
+.mm-collapse {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--node-color);
+  background: var(--surface);
+  border: 1.5px solid var(--node-color);
+  z-index: 2;
+}
+.mm-collapse-right { right: -12px; translate: 50% -50%; }
+.mm-collapse-left { left: -12px; translate: -50% -50%; }
+.react-flow__handle.mm-connect-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.mm-node-wrap:hover .mm-connect-dot { opacity: 1; }
+.react-flow__handle-bottom.mm-connect-dot { bottom: -16px; }
+.mm-curve-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  cursor: grab;
+  pointer-events: all;
+}
+.mm-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
+.mm-panel-label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}

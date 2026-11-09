@@ -8,7 +8,7 @@ function kidsOf(d: MapData, id: string): MindNode[] {
 }
 
 /** Where a new child of `parentId` goes: next to the parent, below its lowest sibling. */
-export function placeNewChild(d: MapData, parentId: string): { x: number; y: number; side: Side } {
+export function placeNewChild(d: MapData, parentId: string, preferSide?: Side): { x: number; y: number; side: Side } {
   const parent = d.nodes.find((n) => n.id === parentId);
   if (!parent) return { x: 0, y: 0, side: 'right' };
   let side: Side;
@@ -17,7 +17,7 @@ export function placeNewChild(d: MapData, parentId: string): { x: number; y: num
     const kids = kidsOf(d, parentId);
     const right = kids.filter((k) => k.side !== 'left');
     const left = kids.filter((k) => k.side === 'left');
-    side = left.length < right.length ? 'left' : 'right';
+    side = preferSide ?? (left.length < right.length ? 'left' : 'right');
     siblings = side === 'left' ? left : right;
   } else {
     side = parent.side ?? 'right';

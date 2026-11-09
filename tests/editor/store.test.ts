@@ -86,6 +86,36 @@ describe('editor store', () => {
     expect(store.getState().dirty).toBe(false);
   });
 
+  it('buffers keys typed before the new node input has focus, and clears them on a new edit', () => {
+    const { store, root } = setup();
+    store.getState().setEditing(root);
+    store.getState().pushTypeahead('X');
+    store.getState().pushTypeahead('y');
+    expect(store.getState().takeTypeahead()).toBe('Xy');
+    expect(store.getState().takeTypeahead()).toBe('');
+    store.getState().pushTypeahead('z');
+    store.getState().setEditing(null);
+    store.getState().setEditing(root);
+    expect(store.getState().takeTypeahead()).toBe('');
+  });
+
+  it('select() bumps the selection stamp; syncSelection() (from the canvas) does not', () => {
+    const { store, root } = setup();
+    const s0 = store.getState().selectionStamp;
+    store.getState().syncSelection([root], []);
+    expect(store.getState()).toMatchObject({ selectedNodeIds: [root], selectionStamp: s0 });
+    store.getState().select([], []);
+    expect(store.getState().selectionStamp).toBe(s0 + 1);
+  });
+
+  it('syncSelection with the same ids keeps the same arrays (no re-render)', () => {
+    const { store, root } = setup();
+    store.getState().syncSelection([root], []);
+    const before = store.getState().selectedNodeIds;
+    store.getState().syncSelection([root], []);
+    expect(store.getState().selectedNodeIds).toBe(before);
+  });
+
   it('restores collapsed state from localStorage on load, dropping ids of deleted nodes', () => {
     const store = createEditorStore('owner:m1');
     const d = newMapData('Gốc');

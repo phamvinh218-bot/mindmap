@@ -42,10 +42,10 @@ export function displayText(n: MindNode): string {
   return n.text.trim() || NEW_NODE_TEXT;
 }
 
-export function addChild(d: MapData, parentId: string): { data: MapData; id: string } {
+export function addChild(d: MapData, parentId: string, opts: { side?: Side } = {}): { data: MapData; id: string } {
   const parent = getNode(d, parentId);
   if (!parent) return { data: d, id: '' };
-  const pos = placeNewChild(d, parentId);
+  const pos = placeNewChild(d, parentId, opts.side);
   const color =
     parent.parentId === null ? PALETTE[d.nodes.filter((n) => n.parentId === parentId).length % PALETTE.length] : parent.color;
   const node: MindNode = { id: newNodeId(), parentId, text: '', color, shape: 'rounded', x: pos.x, y: pos.y, side: pos.side };
@@ -55,7 +55,8 @@ export function addChild(d: MapData, parentId: string): { data: MapData; id: str
 export function addSibling(d: MapData, nodeId: string): { data: MapData; id: string } {
   const n = getNode(d, nodeId);
   if (!n) return { data: d, id: '' };
-  return addChild(d, n.parentId ?? n.id);
+  // A sibling of a root child stays on the same side.
+  return addChild(d, n.parentId ?? n.id, { side: n.parentId !== null ? n.side : undefined });
 }
 
 export function deleteNodes(d: MapData, ids: string[]): MapData {
