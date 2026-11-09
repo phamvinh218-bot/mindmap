@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { validateMapData } from './schema';
-import type { Repo } from './db/repo';
+import type { Repo, ShareRow } from './db/repo';
 import { jsonError } from './auth/guards';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -47,4 +47,26 @@ export function slug(title: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return s || 'mindmap';
+}
+
+
+export const MIN_SHARE_PASSWORD = 4;
+const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
+export const isShareToken = (t: string) => TOKEN_RE.test(t);
+
+export function shareUrl(req: Request, token: string): string {
+  return `${new URL(req.url).origin}/s/${token}`;
+}
+
+/** What the owner sees about a share — never the password hash. */
+export function publicShare(req: Request, s: ShareRow) {
+  return {
+    id: s.id,
+    label: s.label,
+    permission: s.permission,
+    enabled: s.enabled,
+    url: shareUrl(req, s.token),
+    created_at: s.created_at,
+    last_used_at: s.last_used_at,
+  };
 }

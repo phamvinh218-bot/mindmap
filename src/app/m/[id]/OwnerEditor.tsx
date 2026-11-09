@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Editor } from '@/editor/Editor';
 import { ownerApi } from '@/editor/api';
+import { ShareDialog } from '@/editor/ShareDialog';
 import type { MapData } from '@/lib/types';
 
 export function OwnerEditor({
@@ -17,7 +18,6 @@ export function OwnerEditor({
   const api = useMemo(() => ownerApi(map.id), [map.id]);
   const [title, setTitle] = useState(map.title);
   const [shareOpen, setShareOpen] = useState(openShare);
-  void shareOpen;
 
   const rename = async (t: string) => {
     const prev = title;
@@ -31,6 +31,7 @@ export function OwnerEditor({
   };
 
   return (
+    <>
     <Editor
       mapKey={`owner:${map.id}`}
       mapId={map.id}
@@ -56,5 +57,7 @@ export function OwnerEditor({
         </button>
       }
     />
+    {shareOpen && <ShareDialog mapId={map.id} onClose={() => setShareOpen(false)} />}
+    </>
   );
 }
