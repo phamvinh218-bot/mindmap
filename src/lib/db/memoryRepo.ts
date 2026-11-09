@@ -7,7 +7,8 @@ function clone<T>(v: T): T {
 export function createMemoryRepo(): Repo {
   const maps = new Map<string, MapRow>();
   const shares = new Map<string, ShareRow>();
-  let attempts: { key: string; at: number }[] = [];
+  let attempts: { id: number; key: string; at: number }[] = [];
+  let attemptSeq = 0;
   // Strictly increasing timestamps so "newest first" ordering is deterministic.
   let lastTs = 0;
   const now = () => {
@@ -76,12 +77,17 @@ export function createMemoryRepo(): Repo {
     async deleteShare(id) {
       return shares.delete(id);
     },
-    async countRecentFailures(key, sinceIso) {
+    async countRecentFailures(key, sinceIso, upToId) {
       const since = Date.parse(sinceIso);
-      return attempts.filter((a) => a.key === key && a.at >= since).length;
+      return attempts.filter((a) => a.key === key && a.at >= since && (upToId === undefined || a.id <= upToId)).length;
     },
     async recordFailure(key) {
-      attempts.push({ key, at: Date.now() });
+      const id = ++attemptSeq;
+      attempts.push({ id, key, at: Date.now() });
+      return id;
+    },
+    async clearAttempts(key) {
+      attempts = attempts.filter((a) => a.key !== key);
     },
     async purgeAttemptsBefore(iso) {
       const t = Date.parse(iso);

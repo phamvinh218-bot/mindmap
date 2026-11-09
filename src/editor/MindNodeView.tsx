@@ -39,6 +39,12 @@ function Editor({ node, actions }: { node: MindNode; actions: NodeActions }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const done = useRef(false);
 
+  const finish = (text: string | null) => {
+    if (done.current) return;
+    done.current = true;
+    actions.commitText(node.id, text);
+  };
+
   useEffect(() => {
     // A freshly added node stays visibility:hidden until React Flow measures it, and hidden
     // elements can't take focus — retry for a few frames.
@@ -59,18 +65,15 @@ function Editor({ node, actions }: { node: MindNode; actions: NodeActions }) {
         }
       } else if (tries++ < 50) {
         timer = setTimeout(tryFocus, 20);
+      } else {
+        // never got focus: leave edit mode so the keyboard is not stuck swallowing keys
+        finish(null);
       }
     };
     tryFocus();
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const finish = (text: string | null) => {
-    if (done.current) return;
-    done.current = true;
-    actions.commitText(node.id, text);
-  };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     e.stopPropagation();

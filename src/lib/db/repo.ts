@@ -49,8 +49,11 @@ export interface Repo {
   createShare(row: NewShare): Promise<ShareRow>;
   updateShare(id: string, patch: SharePatch): Promise<ShareRow | null>;
   deleteShare(id: string): Promise<boolean>;
-  countRecentFailures(key: string, sinceIso: string): Promise<number>;
-  recordFailure(key: string): Promise<void>;
+  /** Attempts for key since sinceIso; with upToId, only those recorded at or before that attempt. */
+  countRecentFailures(key: string, sinceIso: string, upToId?: number): Promise<number>;
+  /** Records an attempt and returns its id (monotonic). */
+  recordFailure(key: string): Promise<number>;
+  clearAttempts(key: string): Promise<void>;
   purgeAttemptsBefore(iso: string): Promise<void>;
   ping(): Promise<void>;
 }

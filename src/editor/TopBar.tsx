@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import type { EditorMode } from './NodePanel';
 
@@ -18,6 +17,7 @@ export function TopBar({
   onConnectTool,
   onFit,
   extra,
+  onBack,
 }: {
   title: string;
   mode: EditorMode;
@@ -32,6 +32,7 @@ export function TopBar({
   onConnectTool: () => void;
   onFit: () => void;
   extra?: ReactNode;
+  onBack?: () => void;
 }) {
   const [draft, setDraft] = useState(title);
   const [shownTitle, setShownTitle] = useState(title);
@@ -51,9 +52,9 @@ export function TopBar({
   return (
     <header className="flex flex-wrap items-center gap-2 border-b border-border bg-surface px-3 py-2">
       {mode === 'owner' && (
-        <Link href="/" className="btn px-2" aria-label="Về danh sách" title="Về danh sách">
+        <button type="button" onClick={onBack} className="btn px-2" aria-label="Về danh sách" title="Về danh sách">
           ←
-        </Link>
+        </button>
       )}
       {mode === 'owner' && onRename ? (
         <input

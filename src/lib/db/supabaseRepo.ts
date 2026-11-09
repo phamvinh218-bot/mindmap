@@ -61,17 +61,23 @@ export function createSupabaseRepo(url: string, serviceKey: string): Repo {
       const rows = must(await db.from('shares').delete().eq('id', id).select('id'));
       return (rows ?? []).length > 0;
     },
-    async countRecentFailures(key, sinceIso) {
-      const res = await db
+    async countRecentFailures(key, sinceIso, upToId) {
+      let q = db
         .from('login_attempts')
         .select('key', { count: 'exact', head: true })
         .eq('key', key)
         .gte('attempted_at', sinceIso);
+      if (upToId !== undefined) q = q.lte('id', upToId);
+      const res = await q;
       if (res.error) throw new Error(`supabase: ${res.error.message}`);
       return res.count ?? 0;
     },
     async recordFailure(key) {
-      must(await db.from('login_attempts').insert({ key }));
+      const row = must(await db.from('login_attempts').insert({ key }).select('id').single()) as { id: number };
+      return Number(row.id);
+    },
+    async clearAttempts(key) {
+      must(await db.from('login_attempts').delete().eq('key', key));
     },
     async purgeAttemptsBefore(iso) {
       must(await db.from('login_attempts').delete().lt('attempted_at', iso));

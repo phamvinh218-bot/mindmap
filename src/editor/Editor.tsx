@@ -12,9 +12,9 @@ import { createEditorStore, type EditorStore } from './store';
 import { Canvas } from './Canvas';
 import { NodePanel, type EditorMode } from './NodePanel';
 import { TopBar } from './TopBar';
-import { keyToCommand } from './keyboard';
+import { isShortcutTarget, keyToCommand } from './keyboard';
 import { useToast } from './Toast';
-import { useAutosave } from './useAutosave';
+import { confirmLeave, useAutosave } from './useAutosave';
 import { ConflictBanner, StatusLabel } from './ConflictBanner';
 import type { EditorApi } from './api';
 import type { NodeActions } from './MindNodeView';
@@ -47,11 +47,6 @@ function downloadJson(title: string, data: MapData) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function isTextTarget(t: EventTarget | null): boolean {
-  if (!(t instanceof HTMLElement)) return false;
-  return !!t.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]');
-}
-
 function Inner(props: EditorProps & { store: EditorStore }) {
   const { store, mode, maps = [], mapId = null, api } = props;
   const rf = useReactFlow();
@@ -79,6 +74,24 @@ function Inner(props: EditorProps & { store: EditorStore }) {
 
   // Keyed by content so a parent passing a fresh array each render does not re-derive every node.
   const mapsKey = JSON.stringify(maps);
+
+  /** Soft navigation skips beforeunload: save first, and ask if edits would be lost. */
+  const leave = useCallback(
+    async (url: string) => {
+      const ok = await confirmLeave(
+        () => saverRef.current.flush(),
+        () => store.getState().dirty,
+        (m) => window.confirm(m),
+      );
+      if (ok) router.push(url);
+    },
+    [router, store],
+  );
+  const leaveRef = useRef(leave);
+  useEffect(() => {
+    leaveRef.current = leave;
+  }, [leave]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const titles = useMemo(() => new Map(maps.map((m) => [m.id, m.title])), [mapsKey]);
 
@@ -137,7 +150,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
         if (!target) return;
         if (mode !== 'owner') return showToast('Bạn chưa được chia sẻ mindmap này');
         if (!titles.has(target)) return showToast('mindmap không còn tồn tại');
-        void (saverRef.current?.flush() ?? Promise.resolve()).finally(() => router.push(`/m/${target}`));
+        void leaveRef.current(`/m/${target}`);
       },
     }),
     [store, mode, titles, router, showToast],
@@ -173,7 +186,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
         setConnectFrom(null);
         return;
       }
-      const editing = isTextTarget(e.target);
+      const editing = !isShortcutTarget(e.target);
       const s = store.getState();
       if (s.editingNodeId && !editing) {
         // The new node's text box is still taking focus: keep what the user types.
@@ -243,6 +256,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
   return (
     <div className="flex h-dvh flex-col">
       <TopBar
+        onBack={() => void leave('/')}
         title={props.initial.title}
         mode={mode}
         onRename={props.onRename}
@@ -275,7 +289,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
         onDownload={() => downloadJson(props.initial.title, store.getState().data)}
         onReauth={() => (props.onReauth ? props.onReauth() : window.location.reload())}
       />
-      <div ref={wrapRef} tabIndex={-1} className="relative flex-1 outline-none" style={{ background: 'var(--canvas)' }}>
+      <div ref={wrapRef} data-mm-canvas tabIndex={-1} className="relative flex-1 outline-none" style={{ background: 'var(--canvas)' }}>
         <Canvas
           store={store}
           mapKey={props.mapKey}

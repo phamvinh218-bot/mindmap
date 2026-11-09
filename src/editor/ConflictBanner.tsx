@@ -13,6 +13,7 @@ export const STATUS_LABEL: Record<SaveStatus, string> = {
   expired: 'Phiên đã hết hạn',
   forbidden: 'Không còn quyền sửa',
   invalid: 'Không lưu được',
+  gone: 'Mindmap đã bị xóa',
 };
 
 export function StatusLabel({ status }: { status: SaveStatus }) {
@@ -52,6 +53,7 @@ export function ConflictBanner({
   else if (status === 'expired') message = 'Phiên đã hết hạn. Tải phần đang sửa về máy trước khi mở lại.';
   else if (status === 'forbidden') message = 'Bạn không còn quyền sửa mindmap này. Phần đang sửa chưa được lưu.';
   else if (status === 'invalid') message = 'Không lưu được: mindmap quá lớn hoặc dữ liệu lỗi.';
+  else if (status === 'gone') message = 'Mindmap này đã bị xóa. Phần đang sửa chưa được lưu.';
   if (!message) return null;
 
   return (
@@ -63,7 +65,7 @@ export function ConflictBanner({
             Tải bản mới
           </button>
         )}
-        {status === 'conflict' && mode === 'owner' && onSaveCopy && (
+        {(status === 'conflict' || status === 'gone') && mode === 'owner' && onSaveCopy && (
           <button type="button" className="btn btn-primary" disabled={busy} onClick={run(onSaveCopy)}>
             Lưu bản của tôi thành bản sao
           </button>

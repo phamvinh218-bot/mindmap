@@ -3,7 +3,7 @@ import { getRepo } from '@/lib/db';
 import { clientIp, jsonError, secureCookies } from '@/lib/auth/guards';
 import { isShareToken, readJson } from '@/lib/api';
 import { verifyPassword } from '@/lib/auth/password';
-import { isBlocked, recordFailure } from '@/lib/auth/rateLimit';
+import { attempt, clearAttempts } from '@/lib/auth/rateLimit';
 import { SHARE_MAX_AGE, shareCookieName, signShareSession } from '@/lib/auth/session';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -13,13 +13,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   if (!share || !share.enabled) return jsonError(404, 'not_found');
 
   const key = `share:${token}:${clientIp(req)}`;
-  if (await isBlocked(repo, key)) return jsonError(429, 'locked');
+  if (!(await attempt(repo, key))) return jsonError(429, 'locked');
   const body = await readJson(req);
   const password = typeof body?.password === 'string' ? body.password : '';
   if (!password || !(await verifyPassword(password, share.password_hash))) {
-    await recordFailure(repo, key);
     return jsonError(401, 'wrong_password');
   }
+  await clearAttempts(repo, key);
 
   await repo.updateShare(share.id, { last_used_at: new Date().toISOString() });
   const res = NextResponse.json({ ok: true });

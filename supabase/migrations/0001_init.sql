@@ -25,6 +25,7 @@ create table if not exists public.shares (
 create index if not exists shares_map_id_idx on public.shares(map_id);
 
 create table if not exists public.login_attempts (
+  id bigserial primary key,
   key text not null,
   attempted_at timestamptz not null default now()
 );

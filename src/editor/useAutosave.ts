@@ -12,9 +12,22 @@ export type SaveStatus =
   | 'conflict' // someone saved a newer version
   | 'expired' // session gone (401)
   | 'forbidden' // link became view-only / disabled (403)
-  | 'invalid'; // 400/413: cannot be saved as is
+  | 'invalid' // 400/413: cannot be saved as is
+  | 'gone'; // 404: the map was deleted
 
-const BLOCKED: SaveStatus[] = ['conflict', 'expired', 'forbidden', 'invalid'];
+const BLOCKED: SaveStatus[] = ['conflict', 'expired', 'forbidden', 'invalid', 'gone'];
+
+export const LEAVE_PROMPT = 'Có thay đổi chưa lưu được. Vẫn rời khỏi trang?';
+
+/** Save what can be saved, then ask before leaving if edits would be lost. */
+export async function confirmLeave(
+  flush: () => Promise<void>,
+  isDirty: () => boolean,
+  ask: (message: string) => boolean,
+): Promise<boolean> {
+  await flush().catch(() => undefined);
+  return !isDirty() || ask(LEAVE_PROMPT);
+}
 
 export function useAutosave(
   store: EditorStore,
@@ -75,6 +88,8 @@ export function useAutosave(
         case 400:
         case 413:
           return setStatus('invalid');
+        case 404:
+          return setStatus('gone');
         default:
           setStatus('error');
           retry.current = setTimeout(() => void doSaveRef.current(), retryMs);

@@ -37,3 +37,15 @@ export function keyToCommand(e: KeyLike, ctx: { editing: boolean }): Command {
       return null;
   }
 }
+
+/**
+ * Tree shortcuts only apply when focus is on the page itself or inside the canvas
+ * (not on a toolbar button, link, form field or dialog).
+ */
+export function isShortcutTarget(t: EventTarget | null): boolean {
+  if (typeof document === 'undefined') return false;
+  if (!t || t === document.body || t === document.documentElement) return true;
+  if (!(t instanceof Element)) return false;
+  if (t.closest('input, textarea, select, button, a, [contenteditable="true"], [role="dialog"], [role="menuitem"]')) return false;
+  return !!t.closest('[data-mm-canvas]');
+}
