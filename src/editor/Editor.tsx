@@ -14,6 +14,8 @@ import { NodePanel, type EditorMode } from './NodePanel';
 import { TopBar } from './TopBar';
 import { keyToCommand } from './keyboard';
 import { useToast } from './Toast';
+import { useAutosave } from './useAutosave';
+import { ConflictBanner, StatusLabel } from './ConflictBanner';
 import type { EditorApi } from './api';
 import type { NodeActions } from './MindNodeView';
 
@@ -29,8 +31,20 @@ export interface EditorProps {
   onRename?: (title: string) => void;
   /** Extra top-bar controls (owner: Share button). */
   extra?: ReactNode;
-  /** Rendered between the top bar and canvas, e.g. a conflict banner. */
-  renderStatus?: (store: EditorStore) => { status: ReactNode; banner: ReactNode; flush: () => Promise<void>; saveNow: () => void };
+  /** Owner: save the local copy as a new map after a version conflict. */
+  onSaveAsCopy?: (data: MapData) => Promise<string>;
+  /** Where to send the viewer when the session expired. */
+  onReauth?: () => void;
+}
+
+function downloadJson(title: string, data: MapData) {
+  const blob = new Blob([JSON.stringify({ title, data }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${title.replace(/[\\/:*?"<>|]+/g, '-') || 'mindmap'}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function isTextTarget(t: EventTarget | null): boolean {
@@ -39,8 +53,7 @@ function isTextTarget(t: EventTarget | null): boolean {
 }
 
 function Inner(props: EditorProps & { store: EditorStore }) {
-  const { store, mode, maps = [], mapId = null, api: _api } = props;
-  void _api;
+  const { store, mode, maps = [], mapId = null, api } = props;
   const rf = useReactFlow();
   const router = useRouter();
   const toast = useToast();
@@ -54,7 +67,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
   const canUndo = store((s) => s.past.length > 0);
   const canRedo = store((s) => s.future.length > 0);
 
-  const saver = props.renderStatus?.(store);
+  const saver = useAutosave(store, api, {});
   const saverRef = useRef(saver);
   useEffect(() => {
     saverRef.current = saver;
@@ -233,7 +246,7 @@ function Inner(props: EditorProps & { store: EditorStore }) {
         title={props.initial.title}
         mode={mode}
         onRename={props.onRename}
-        status={saver?.status ?? null}
+        status={mode === 'view' ? null : <StatusLabel status={saver.status} />}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={() => store.getState().undo()}
@@ -244,7 +257,24 @@ function Inner(props: EditorProps & { store: EditorStore }) {
         onFit={() => rf.fitView({ padding: 0.25, maxZoom: 1.2, duration: 300 })}
         extra={props.extra}
       />
-      {saver?.banner}
+      <ConflictBanner
+        status={saver.status}
+        mode={mode}
+        onReload={saver.reloadLatest}
+        onSaveCopy={
+          props.onSaveAsCopy
+            ? async () => {
+                const s = store.getState();
+                const url = await props.onSaveAsCopy!(s.data);
+                s.markSaved(s.version, s.data); // the copy holds these edits now
+                window.location.href = url;
+              }
+            : undefined
+        }
+        onRetry={saver.retry}
+        onDownload={() => downloadJson(props.initial.title, store.getState().data)}
+        onReauth={() => (props.onReauth ? props.onReauth() : window.location.reload())}
+      />
       <div ref={wrapRef} tabIndex={-1} className="relative flex-1 outline-none" style={{ background: 'var(--canvas)' }}>
         <Canvas
           store={store}
