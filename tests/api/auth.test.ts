@@ -47,7 +47,7 @@ describe('owner login', () => {
   });
 
   it('logout clears the cookie', async () => {
-    const res = await logout(req('/api/auth/logout', { method: 'POST' }));
+    const res = await logout();
     expect(res.headers.get('set-cookie')).toMatch(new RegExp(`${OWNER_COOKIE}=;.*Max-Age=0`, 'i'));
   });
 });
