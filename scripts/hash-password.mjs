@@ -45,5 +45,7 @@ if (again !== pw) {
   console.error('Hai lần nhập không khớp.');
   process.exit(1);
 }
-console.log('\nDán giá trị sau vào biến môi trường OWNER_PASSWORD_HASH:\n');
-console.log(await bcrypt.hash(pw, 10));
+const hash = await bcrypt.hash(pw, 10);
+// Encoded without "$" so env loaders cannot mangle it (see src/lib/auth/password.ts).
+console.log('\nDán nguyên giá trị sau vào biến môi trường OWNER_PASSWORD_HASH:\n');
+console.log('b64:' + Buffer.from(hash, 'utf8').toString('base64url'));

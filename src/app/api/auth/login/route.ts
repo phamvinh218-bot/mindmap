@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getRepo } from '@/lib/db';
-import { verifyPassword } from '@/lib/auth/password';
+import { ownerPasswordHash, verifyPassword } from '@/lib/auth/password';
 import { isBlocked, recordFailure } from '@/lib/auth/rateLimit';
 import { OWNER_COOKIE, OWNER_MAX_AGE, signOwnerSession } from '@/lib/auth/session';
 import { clientIp, jsonError, secureCookies } from '@/lib/auth/guards';
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json().catch(() => null)) as { password?: unknown } | null;
   const password = typeof body?.password === 'string' ? body.password : '';
-  const hash = process.env.OWNER_PASSWORD_HASH ?? '';
+  const hash = ownerPasswordHash();
   if (!hash || !password || !(await verifyPassword(password, hash))) {
     await recordFailure(repo, key);
     return jsonError(401, 'wrong_password');

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { encodeOwnerHash, hashPassword, ownerPasswordHash, verifyPassword } from '@/lib/auth/password';
 import {
   signOwnerSession, verifyOwnerSession, signShareSession, verifyShareSession, shareCookieName, generateShareToken,
 } from '@/lib/auth/session';
@@ -24,6 +24,24 @@ describe('password', () => {
 
   it('returns false for a malformed hash instead of throwing', async () => {
     expect(await verifyPassword('abc', 'not-a-hash')).toBe(false);
+  });
+});
+
+describe('owner hash from env', () => {
+  it('accepts a b64:-encoded bcrypt hash (no $ for env loaders to expand)', async () => {
+    const h = await hashPassword('abc');
+    vi.stubEnv('OWNER_PASSWORD_HASH', encodeOwnerHash(h));
+    expect(encodeOwnerHash(h)).not.toContain('$');
+    expect(ownerPasswordHash()).toBe(h);
+  });
+  it('still accepts a raw bcrypt hash', async () => {
+    const h = await hashPassword('abc');
+    vi.stubEnv('OWNER_PASSWORD_HASH', h);
+    expect(ownerPasswordHash()).toBe(h);
+  });
+  it('is empty when unset', () => {
+    vi.stubEnv('OWNER_PASSWORD_HASH', '');
+    expect(ownerPasswordHash()).toBe('');
   });
 });
 
