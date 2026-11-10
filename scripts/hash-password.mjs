@@ -1,5 +1,27 @@
 // Prints a bcrypt hash for OWNER_PASSWORD_HASH. The password is read without echoing.
+// With --write-env it writes .env.local for local use instead (keeping other values,
+// creating SESSION_SECRET / CRON_SECRET when missing).
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+
+function writeEnvLocal(encodedHash) {
+  const file = '.env.local';
+  const lines = existsSync(file) ? readFileSync(file, 'utf8').split(/\r?\n/) : [];
+  const env = new Map();
+  for (const l of lines) {
+    const m = /^([A-Z0-9_]+)=(.*)$/.exec(l);
+    if (m) env.set(m[1], m[2]);
+  }
+  env.set('OWNER_PASSWORD_HASH', encodedHash);
+  if (!env.get('SESSION_SECRET')) env.set('SESSION_SECRET', randomBytes(36).toString('base64url'));
+  if (!env.get('CRON_SECRET')) env.set('CRON_SECRET', randomBytes(24).toString('base64url'));
+  if (!env.has('SUPABASE_URL')) env.set('SUPABASE_URL', '');
+  if (!env.has('SUPABASE_SERVICE_ROLE_KEY')) env.set('SUPABASE_SERVICE_ROLE_KEY', '');
+  const out = ['# Local settings (not committed). Empty SUPABASE_URL = in-memory store, data lost on restart.'];
+  for (const [k, v] of env) out.push(`${k}=${v}`);
+  writeFileSync(file, out.join('\n') + '\n');
+}
 
 function readHidden(prompt) {
   return new Promise((resolve) => {
@@ -47,5 +69,11 @@ if (again !== pw) {
 }
 const hash = await bcrypt.hash(pw, 10);
 // Encoded without "$" so env loaders cannot mangle it (see src/lib/auth/password.ts).
-console.log('\nDán nguyên giá trị sau vào biến môi trường OWNER_PASSWORD_HASH:\n');
-console.log('b64:' + Buffer.from(hash, 'utf8').toString('base64url'));
+const encoded = 'b64:' + Buffer.from(hash, 'utf8').toString('base64url');
+if (process.argv.includes('--write-env')) {
+  writeEnvLocal(encoded);
+  console.log('\nĐã lưu mật khẩu vào .env.local. Chạy "npm run dev" rồi mở http://localhost:3000');
+} else {
+  console.log('\nDán nguyên giá trị sau vào biến môi trường OWNER_PASSWORD_HASH:\n');
+  console.log(encoded);
+}

@@ -11,9 +11,8 @@ Công nghệ: Next.js 16 · React Flow · Supabase (Postgres) · Vercel. Tất c
 
 ```bash
 npm install
-cp .env.example .env.local
-npm run hash-password      # nhập mật khẩu, dán kết quả vào OWNER_PASSWORD_HASH
-npm run dev
+npm run setup:local        # đặt mật khẩu, tự tạo file .env.local
+npm run dev                # mở http://localhost:3000
 ```
 
 Nếu để trống `SUPABASE_URL`, web dùng bộ nhớ tạm. Dữ liệu sẽ mất khi tắt server, nên chế độ này chỉ dùng để thử.
