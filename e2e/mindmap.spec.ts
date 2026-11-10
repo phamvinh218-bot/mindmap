@@ -53,8 +53,8 @@ test('owner builds a map, shares it, partner edits, owner sees a conflict', asyn
 
   // color one
   await node(page, 'Nhân sự').click();
-  await page.getByRole('button', { name: 'Màu #2b8a3e' }).click();
-  await expect(node(page, 'Nhân sự').locator('.mm-node-wrap')).toHaveAttribute('style', /#2b8a3e/i);
+  await page.getByRole('button', { name: 'Màu #10b981' }).click();
+  await expect(node(page, 'Nhân sự').locator('.mm-node-wrap')).toHaveAttribute('style', /#10b981/i);
 
   // connect two nodes across branches
   await node(page, 'Tuyển dev').click();

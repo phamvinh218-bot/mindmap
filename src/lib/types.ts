@@ -29,18 +29,18 @@ export interface MapData {
   edges: Connection[];
 }
 
-/** 10 mid-tone colors that stay readable on both light and dark canvases. */
+/** 10 bright, modern colors (minimal style) that stay readable as fills and outlines on white. */
 export const PALETTE: readonly string[] = [
-  '#2f6fdf', // blue
-  '#d9480f', // orange
-  '#2b8a3e', // green
-  '#ae3ec9', // purple
-  '#c92a2a', // red
-  '#0c8599', // teal
-  '#e67700', // amber
-  '#5f3dc4', // violet
-  '#a61e4d', // raspberry
-  '#5c7080', // slate
+  '#6366f1', // indigo
+  '#0ea5e9', // sky
+  '#10b981', // emerald
+  '#f59e0b', // amber
+  '#f43f5e', // rose
+  '#8b5cf6', // violet
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#ec4899', // pink
+  '#64748b', // slate
 ];
 
-export const DEFAULT_CONNECTION_COLOR = '#8a8f98';
+export const DEFAULT_CONNECTION_COLOR = '#a1a1aa';

@@ -1,33 +1,21 @@
 @import "tailwindcss";
 
+/* Light, minimal theme (always light, even when the OS is in dark mode). */
 :root {
-  --bg: #f6f7f9;
+  color-scheme: light;
+  --bg: #fafafa;
   --surface: #ffffff;
-  --surface-2: #eef0f3;
-  --fg: #1b1f24;
-  --muted: #5f6b7a;
-  --border: #dde1e6;
-  --accent: #2f6fdf;
+  --surface-2: #f4f4f5;
+  --fg: #18181b;
+  --muted: #71717a;
+  --border: #e9e9ec;
+  --accent: #6366f1;
   --accent-fg: #ffffff;
-  --danger: #c92a2a;
-  --canvas: #fbfbfc;
-  --canvas-dot: #d6dae0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111418;
-    --surface: #1a1e24;
-    --surface-2: #232830;
-    --fg: #e8ebef;
-    --muted: #97a2b0;
-    --border: #2d333c;
-    --accent: #5b8ff0;
-    --accent-fg: #0b1220;
-    --danger: #ff6b6b;
-    --canvas: #14171c;
-    --canvas-dot: #2a3039;
-  }
+  --danger: #ef4444;
+  --canvas: #ffffff;
+  --canvas-dot: #e4e4e7;
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 3px rgba(24, 24, 27, 0.06);
+  --shadow-md: 0 4px 24px rgba(24, 24, 27, 0.08);
 }
 
 @theme inline {
@@ -50,7 +38,8 @@ body {
 }
 
 .btn {
-  @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-surface-2 disabled:opacity-50 disabled:pointer-events-none;
+  @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none;
+  box-shadow: var(--shadow-sm);
 }
 .btn-primary {
   @apply border-transparent bg-accent text-accent-fg hover:opacity-90 hover:bg-accent;
@@ -83,38 +72,45 @@ body {
   gap: 6px;
   max-width: 220px;
   min-width: 36px;
-  padding: 7px 12px;
+  padding: 8px 14px;
   font-size: 14px;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--fg);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  border: 2px solid var(--node-color);
-  background: color-mix(in srgb, var(--node-color) 12%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--node-color) 55%, #ffffff);
+  background: color-mix(in srgb, var(--node-color) 7%, #ffffff);
+  box-shadow: var(--shadow-sm);
   cursor: default;
-  transition: box-shadow 120ms;
+  transition: box-shadow 150ms, transform 150ms;
 }
 .mm-root {
-  padding: 11px 18px;
+  padding: 12px 22px;
   font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   max-width: 260px;
   color: #fff;
+  border-color: transparent;
   background: var(--node-color);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--node-color) 30%, transparent);
 }
 .mm-shape-rect { border-radius: 2px; }
-.mm-shape-rounded { border-radius: 10px; }
+.mm-shape-rounded { border-radius: 12px; }
 .mm-shape-pill { border-radius: 999px; padding-left: 16px; padding-right: 16px; }
 .mm-shape-ellipse { border-radius: 50%; padding: 12px 22px; text-align: center; justify-content: center; }
 .mm-shape-underline {
   border-width: 0 0 2px 0;
+  border-color: var(--node-color);
   border-radius: 0;
   background: transparent;
+  box-shadow: none;
   padding-left: 4px;
   padding-right: 4px;
 }
-.mm-root.mm-shape-underline { color: var(--fg); font-size: 18px; }
-.mm-selected { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.mm-root.mm-shape-underline { color: var(--fg); font-size: 18px; border-color: var(--node-color); }
+.mm-selected { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent), var(--shadow-sm); }
 .mm-connect-target { cursor: crosshair; }
 .mm-connect-target:hover { box-shadow: 0 0 0 3px var(--accent); }
 .mm-placeholder { color: var(--muted); font-style: italic; }
@@ -181,10 +177,11 @@ body {
 }
 .mm-panel {
   border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow-md);
 }
 .mm-panel-label {
   margin-bottom: 6px;
