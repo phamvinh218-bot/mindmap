@@ -38,19 +38,30 @@ function readHidden(prompt) {
     stdin.setRawMode(true);
     stdin.resume();
     stdin.setEncoding('utf8');
-    const onData = (ch) => {
-      if (ch === '\r' || ch === '\n' || ch === '\u0004') {
-        stdin.setRawMode(false);
-        stdin.pause();
-        stdin.off('data', onData);
-        process.stdout.write('\n');
-        resolve(pw);
-      } else if (ch === '\u0003') {
-        process.exit(130);
-      } else if (ch === '\u007f' || ch === '\b') {
-        pw = pw.slice(0, -1);
-      } else {
-        pw += ch;
+    // A chunk may hold several keys (fast typing, paste) and Enter may arrive as "\r\n":
+    // walk it char by char and stop at the first line end, dropping the rest of the chunk.
+    const onData = (chunk) => {
+      for (const ch of chunk) {
+        if (ch === '\r' || ch === '\n' || ch === '\u0004') {
+          if (!pw && ch === '\n') continue; // stray "\n" left over from the previous Enter
+          stdin.setRawMode(false);
+          stdin.pause();
+          stdin.off('data', onData);
+          process.stdout.write('\n');
+          resolve(pw);
+          return;
+        } else if (ch === '\u0003') {
+          process.stdout.write('\n');
+          process.exit(130);
+        } else if (ch === '\u007f' || ch === '\b') {
+          if (pw) {
+            pw = pw.slice(0, -1);
+            process.stdout.write('\b \b');
+          }
+        } else if (ch >= ' ') {
+          pw += ch;
+          process.stdout.write('*');
+        }
       }
     };
     stdin.on('data', onData);
